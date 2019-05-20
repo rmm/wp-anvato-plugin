@@ -28,7 +28,7 @@ class Anvato_Library {
 		'playlist' => 'list_playlists',
 		'vod' => 'list_videos',
 	);
-	
+
 	/**
 	 * The value of the plugin settings on instantiation.
 	 *
@@ -78,7 +78,7 @@ class Anvato_Library {
 		}
 		return self::$instance;
 	}
-	
+
 	/**
 	 * Check whether the settings required for using the API are set.
 	 *
@@ -91,15 +91,15 @@ class Anvato_Library {
 			)
 		);
 	}
-	
+
 	public function get_sel_station() {
 		if(empty($this->selected_station)){
 			return null;
 		}
-		
+
 		return $this->selected_station;
 	}
-	
+
 
 	/**
 	 * Create the unique signature for a request.
@@ -131,23 +131,33 @@ class Anvato_Library {
 	 */
 	private function build_request_params( $args = array() ) {
 		$params = array();
-		
+
 		if ( isset( $args['lk'] ) ) {
 			$params['filter_by'][] = 'name';
 			$params['filter_cond'][] = 'lk';
 			$params['filter_value'][] = rawurlencode( sanitize_text_field( $args['lk'] ) );
 		}
-		
+
 		if ( isset( $args['exp_date'] ) ) {
 			$params['filter_by'][] = 'exp_date';
 			$params['filter_cond'][] = 'ge';
 			$params['filter_value'][] = rawurlencode( sanitize_text_field( $args['exp_date'] ) );
 		}
-		
+
+		if ( isset( $args['added_date'] ) ) {
+			$params['filter_by'][] = 'added_date';
+			$params['filter_cond'][] = 'ge';
+			$params['filter_value'][] = rawurlencode( sanitize_text_field( $args['added_date'] ) );
+		}
+
 		if ( isset( $args['page_no'] ) ) {
 			$params['page_no'] = (int) $args['page_no'];
 		}
-		
+
+		if ( isset( $args['page_sz'] ) ) {
+			$params['page_sz'] = absint( $args['page_sz'] );
+		}
+
 		if ( isset( $args['category_id'] ) ) {
 			$params['filter_by'][] = 'category_id';
 			$params['filter_cond'][] = 'eq';
@@ -188,9 +198,9 @@ class Anvato_Library {
 	 */
 	private function build_request_url( $params = array(), $time ) {
 		return sprintf(
-			$this->api_request_url, 
-			esc_url( $this->general_settings['mcp']['url'] ), $time, 
-			urlencode( $this->build_request_signature( $time ) ), 
+			$this->api_request_url,
+			esc_url( $this->general_settings['mcp']['url'] ), $time,
+			urlencode( $this->build_request_signature( $time ) ),
 			$this->selected_station['public_key'], build_query( $params )
 		);
 	}
@@ -240,7 +250,7 @@ class Anvato_Library {
 	private function request( $params ) {
 		if ( !$this->has_required_settings() ) {
 			return new WP_Error(
-				'missing_required_settings', 
+				'missing_required_settings',
 				__( 'The MCP URL, Public Key, and Private Key settings are required.', ANVATO_DOMAIN_SLUG )
 			);
 		}
@@ -252,23 +262,23 @@ class Anvato_Library {
 		if ( is_wp_error( $response ) ) {
 			return $response;
 		}
-		
+
 		if ( wp_remote_retrieve_response_code($response) === 200 ) {
 			if ( $this->is_api_error( $response ) ) {
 				return new WP_Error(
-					'api_error', 
-					sprintf( 
-						__( '%s Please check your configuration parameters on Settings page.', ANVATO_DOMAIN_SLUG ), 
+					'api_error',
+					sprintf(
+						__( '%s Please check your configuration parameters on Settings page.', ANVATO_DOMAIN_SLUG ),
 						$this->get_api_error( $response )
 					)
 				);
 			}
 
 			return $response;
-		} 
-		
+		}
+
 		return new WP_Error(
-			'request_unsuccessful', 
+			'request_unsuccessful',
 			__( 'There was an error contacting Anvato.', ANVATO_DOMAIN_SLUG )
 		);
 	}
@@ -280,26 +290,26 @@ class Anvato_Library {
 	 *
 	 * @param array $args Search parameters.
 	 * @param string $output_type Desired output type, 'xml' for raw API output.
-	 * 
+	 *
 	 * @return array|WP_Error Array with SimpleXMLElements of any videos found, or WP_Error on failure.
 	 */
 	public function search( $args = array(), $output_type = 'clean' ) {
 		if ( empty( $args['station'] ) ) {
 			return new WP_Error(
-				'missing_required_settings', 
+				'missing_required_settings',
 				__( 'Please select station.', ANVATO_DOMAIN_SLUG )
 			);
 		}
 
 		if ( !isset( $this->api_methods[$args['type']] ) || empty( $this->api_methods[$args['type']] ) ) {
 			return new WP_Error(
-				'missing_required_settings', 
+				'missing_required_settings',
 				__( 'Unknow API call.', ANVATO_DOMAIN_SLUG )
 			);
 		}
-  
+
 		$api_method = $this->api_methods[$args['type']];
-		
+
 		foreach ( $this->general_settings['owners'] as $ow_item ) {
 			if ( $args['station'] === $ow_item['id'] ) {
 				$this->selected_station = $ow_item;
@@ -317,19 +327,19 @@ class Anvato_Library {
 		if ( is_wp_error( $response ) ) {
 			return $response;
 		}
-				
+
 		$xml = simplexml_load_string( wp_remote_retrieve_body( $response ) );
 		if ( !is_object( $xml ) ) {
 			return new WP_Error(
-				'parse_error', 
+				'parse_error',
 				__( 'There was an error processing the search results.', ANVATO_DOMAIN_SLUG )
 			);
 		}
-		
+
 		if ( $output_type === 'xml' ) {
 			return $xml->params;
 		}
-		
+
 		switch ( $api_method ) {
 
 			case 'list_categories':
