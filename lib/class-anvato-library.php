@@ -329,6 +329,10 @@ class Anvato_Library {
 		$this->xml_body = str_replace( "%API_METHOD%", $api_method, $this->xml_body );
 
 		$response = $this->request($this->build_request_params($args));
+
+		// Set up for next request.
+		$this->xml_body = str_replace( $api_method, "%API_METHOD%", $this->xml_body );
+
 		if ( is_wp_error( $response ) ) {
 			return $response;
 		}
