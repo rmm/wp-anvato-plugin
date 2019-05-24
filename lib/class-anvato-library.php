@@ -27,6 +27,7 @@ class Anvato_Library {
 		'live' => 'list_embeddable_channels',
 		'playlist' => 'list_playlists',
 		'vod' => 'list_videos',
+		'video_urls' => 'list_video_published_urls',
 	);
 
 	/**
@@ -180,6 +181,10 @@ class Anvato_Library {
 			$params['filter_by'][] = 'published';
 			$params['filter_cond'][] = 'eq';
 			$params['filter_value'][] = 'true';
+		}
+
+		if ( isset( $args['upload_id'] ) ) {
+			$params['upload_id'] = intval( $args['upload_id'] );
 		}
 
 		return $params;
@@ -340,21 +345,62 @@ class Anvato_Library {
 			return $xml->params;
 		}
 
-		switch ( $api_method ) {
+		$xml_child_path = null;
+		$xpath = null;
 
+		switch ( $api_method ) {
 			case 'list_categories':
-				return $xml->params->category_list->xpath("//category");
+				$xml_child_path = $xml->params->category_list;
+				$xpath          = '//category';
+				break;
 
 			case 'list_embeddable_channels':
-				return $xml->params->channel_list->xpath("//channel");
+				$xml_child_path = $xml->params->channel_list;
+				$xpath          = '//channel';
+				break;
 
 			case 'list_playlists':
-				return $xml->params->video_list->xpath("//playlist");
+				$xml_child_path = $xml->params->video_list;
+				$xpath          = '//playlist';
+				break;
 
 			case 'list_videos':
-				return $xml->params->video_list->xpath("//video");
+				$xml_child_path = $xml->params->video_list;
+				$xpath          = '//video';
+				break;
 
+			case 'list_video_published_urls':
+				$xml_child_path = $xml->params->video_published_url_list;
+				$xpath          = '//video_published_url';
+				break;
 		}
+
+		// Parse the results.
+		if ( ! empty( $xml_child_path ) && ! empty( $xpath ) ) {
+			$data = $xml_child_path->xpath( $xpath );
+		} else {
+			$data = new WP_Error( 'parse_error', __( 'There was an error processing the search results.', 'anvato' ) );
+		}
+
+		/**
+		 * Fires after a search of the Anvato library.
+		 *
+		 * @param array|WP_Error $videos     Array of SimpleXMLElement videos or WP_Error.
+		 * @param string         $api_method API Method requested {@see Anvato_Library::$api_methods}
+		 * @param Anvato_Library $this       Library instance.
+		 */
+		do_action( 'anvato_library_after_search_' . $api_method, $data, $api_method, $this );
+
+		/**
+		 * Fires after a search of the Anvato library.
+		 *
+		 * @param array|WP_Error $videos     Array of SimpleXMLElement videos or WP_Error.
+		 * @param string         $api_method API Method requested {@see Anvato_Library::$api_methods}
+		 * @param Anvato_Library $this       Library instance.
+		 */
+		do_action( 'anvato_library_after_search', $data, $api_method, $this );
+
+		return $data;
 	}
 
 }
