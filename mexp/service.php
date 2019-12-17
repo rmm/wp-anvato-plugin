@@ -25,7 +25,7 @@ class MEXP_Anvato_Service extends MEXP_Service
 	{
 		add_filter('mexp_tabs', array($this, 'tabs'), 10, 1);
 		add_filter('mexp_labels', array($this, 'labels'), 10, 1);
-		
+
 		wp_enqueue_style('mexp-service-anvato', ANVATO_URL . 'mexp/style.css',
 			array('mexp'), '0.1.5'
 		);
@@ -33,7 +33,7 @@ class MEXP_Anvato_Service extends MEXP_Service
 			array('jquery', 'mexp'), '0.1.5'
 		);
 	}
-	
+
 	public function get_station()
 	{
 		return Anvato_Library()->get_sel_station();
@@ -51,13 +51,31 @@ class MEXP_Anvato_Service extends MEXP_Service
 	 *     results to show, and a WP_Error should be returned if there is an
 	 *     error.
 	 */
-	public function request(array $request) 
+	public function request(array $request)
 	{
 		$params = array();
 		if (!empty($request['params']['q']))
 		{
 			$params['lk'] = sanitize_text_field($request['params']['q']);
+		} else
+		{
+			/**
+			 * Pass in an `added_date` filter to optimize the results to videos
+			 * posted in the last 30 days if they aren't searching by title.
+			 */
+			$params['added_date'] = date('F d, Y', current_time('timestamp') - (DAY_IN_SECONDS * 30));
 		}
+
+		if (! empty( $request['params']['max_results']))
+		{
+			$max_results = absint($request['params']['max_results']);
+			// Default back to 25 per page.
+			if ($max_results > 50 || $max_results < 1) {
+				$max_results = 25;
+			}
+			$params['page_sz'] = $max_results;
+		}
+
 		$params['page_no'] = isset($request['page']) && ((int)$request['page'] > 0) ?
 									(int)$request['page'] : 1;
 		switch ($request['params']['type'])
@@ -79,7 +97,7 @@ class MEXP_Anvato_Service extends MEXP_Service
 		$params['type'] = $request['params']['type'];
 		// Save user pref.
 		$cookie = json_encode($params);
-		setcookie('anv_user_preferences', $cookie, 
+		setcookie('anv_user_preferences', $cookie,
 			time()+WEEK_IN_SECONDS, ADMIN_COOKIE_PATH, COOKIE_DOMAIN
 		);
 
@@ -98,7 +116,7 @@ class MEXP_Anvato_Service extends MEXP_Service
 		return $response;
 	}
 
-	function generate_mexp_response_for_vod($results) 
+	function generate_mexp_response_for_vod($results)
 	{
 		$response = new MEXP_Response();
 		$station = $this->get_station();
@@ -131,16 +149,16 @@ class MEXP_Anvato_Service extends MEXP_Service
 		return $response;
 	}
 
-	function generate_mexp_response_for_playlist($results) 
+	function generate_mexp_response_for_playlist($results)
 	{
 		$response = new MEXP_Response();
 		$station = $this->get_station();
-		
+
 		foreach ($results as $playlist)
 		{
 			$item = new MEXP_Response_Item();
 			$item->set_content(sanitize_text_field((string) $playlist->playlist_title));
-                        
+
 			$description = mb_strimwidth((string) $playlist->description, 0, 50, "...");
 			$item->add_meta("description", sanitize_text_field($description));
 			$item->add_meta("video_count", sanitize_text_field((string) $playlist->item_count . "" ) );
@@ -148,7 +166,7 @@ class MEXP_Anvato_Service extends MEXP_Service
 			$item->add_meta("accesskey",$station['access_key']);
 			$item->add_meta("station", $station['id']);
 			$item->set_id(intval((string) $playlist->playlist_id));
-			
+
 			$item->url = $this->generate_shortcode((string) $playlist->playlist_id, 'playlist');
 			/**
 			 * Filter the video item to be added to the response.
@@ -162,13 +180,13 @@ class MEXP_Anvato_Service extends MEXP_Service
 		return $response;
 	}
 
-	function generate_mexp_response_for_channel($results) 
+	function generate_mexp_response_for_channel($results)
 	{
 		$response = new MEXP_Response();
 		$station = $this->get_station();
-		
+
 		foreach ($results as $channel)
-		{			
+		{
 			$item = new MEXP_Response_Item();
 			$item->set_content(sanitize_text_field((string) $channel->channel_name) );
 			$item->add_meta("category", "Live Stream");
@@ -192,7 +210,7 @@ class MEXP_Anvato_Service extends MEXP_Service
 			 * @param  SimpleXMLElement $video The XML for the video from the API.
 			 */
 			$response->add_item(apply_filters('anvato_mexp_response_item', $item, $channel));
-			
+
 			/**
 			 * Add Stitched Streams
 			 */
@@ -217,7 +235,7 @@ class MEXP_Anvato_Service extends MEXP_Service
 					$response->add_item(apply_filters('anvato_mexp_response_item', $item, $stream));
 				}
 			}
-			
+
 		}
 
 		return $response;
@@ -232,13 +250,13 @@ class MEXP_Anvato_Service extends MEXP_Service
 	private function generate_shortcode( $video_id, $type='vod' )
 	{
 		$station = $this->get_station();
-		
+
 		$shortcode = '[anvplayer '.($type==='vod'?'video':'playlist').'="' . esc_attr($video_id) . '"';
 		if(!empty($station)){
 			$shortcode .= ' station="'.esc_attr($station['id']). '"';
 		}
 		$shortcode .=']';
-		
+
 		return $shortcode;
 	}
 
