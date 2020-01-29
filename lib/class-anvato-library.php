@@ -28,6 +28,7 @@ class Anvato_Library {
 		'playlist' => 'list_playlists',
 		'vod' => 'list_videos',
 		'video_urls' => 'list_video_published_urls',
+		'feed' => 'list_feeds'
 	);
 
 	/**
@@ -353,6 +354,7 @@ class Anvato_Library {
 		$xpath = null;
 
 		switch ( $api_method ) {
+
 			case 'list_categories':
 				$xml_child_path = $xml->params->category_list;
 				$xpath          = '//category';
@@ -376,6 +378,11 @@ class Anvato_Library {
 			case 'list_video_published_urls':
 				$xml_child_path = $xml->params->video_published_url_list;
 				$xpath          = '//video_published_url';
+				break;
+
+			case 'list_feeds':
+				$xml_child_path = $xml->params->feed_list;
+				$xpath          = '//feed';
 				break;
 		}
 
