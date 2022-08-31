@@ -88,8 +88,8 @@ class Anvato_Library {
 	 */
 	public function has_required_settings() {
 		return !( empty( $this->general_settings ) ||
-			false !== array_search( '', array( $this->general_settings['mcp']['url'],
-				$this->selected_station['public_key'], $this->selected_station['private_key'] )
+			false !== array_search( '', array( $this->general_settings['mcp']['url'] ?? '',
+				$this->selected_station['public_key'] ?? '', $this->selected_station['private_key'] ?? '' )
 			)
 		);
 	}
