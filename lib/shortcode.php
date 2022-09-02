@@ -21,7 +21,7 @@ function anvato_shortcode_get_parameters( $attr ) {
 	// Set the attributes which the shortcode can override
 	$json = shortcode_atts(
 		array(
-			'mcp' => $mcp['mcp']['id'],
+			'mcp' => $mcp['mcp']['id'] ?? '',
 			'width' => $player['width'] . $player['height_type'],
 			'height' => $player['height'] . $player['width_type'],
 			'video' => null,
@@ -83,7 +83,7 @@ function anvato_shortcode_get_parameters( $attr ) {
 		}
 	}
 
-	if ( !empty( $mcp['mcp']['tkx_key'] ) ) {
+	if ( !empty( $mcp['mcp']['tkx_key'] ?? '' ) ) {
 		$json['accessKey'] = $mcp['mcp']['tkx_key'];
 		$json['accessControl']['preview'] = false;
 	}
@@ -135,7 +135,7 @@ function anvato_shortcode_get_parameters( $attr ) {
 		}
 	}
 
-	foreach($mcp['owners'] as $owner) {
+	foreach($mcp['owners'] ?? [] as $owner) {
 		if($owner['id'] == $json['station'] && !empty($owner['access_key']))
 		{
 			$json['accessKey'] = $owner['access_key'];
