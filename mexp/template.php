@@ -31,7 +31,7 @@ class MEXP_Anvato_Template extends MEXP_Template
 				<div class="mexp-item-thumb" style="background-image: url({{ data.thumbnail }})"
 					class="thickbox">
 					<img src="<?php echo esc_url(ANVATO_URL . 'img/play.png') ?>"
-						onclick="anv_preview('<?php echo $this->anv_settings['mcp']['id'] ?>',
+						onclick="anv_preview('<?php echo $this->anv_settings['mcp']['id'] ?? '' ?>',
 						'{{ data.id }}', '{{ data.meta.type }}', '{{data.meta.accesskey}}');"
 					/>
 					<# if ( data.meta.duration  ) { #>
