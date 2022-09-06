@@ -202,12 +202,15 @@ class Anvato_Library {
 	 *     function because the same timestamp is needed more than once.
 	 * @return string The URL after formatting with sprintf().
 	 */
-	private function build_request_url( $params = array(), $time ) {
+	private function build_request_url( $params, $time ) {
+		if ( ! is_array( $params ) ) {
+			$params = [];
+		}
 		return sprintf(
 			$this->api_request_url,
-			esc_url( $this->general_settings['mcp']['url'] ), $time,
+			esc_url( $this->general_settings['mcp']['url'] ?? '' ), $time,
 			urlencode( $this->build_request_signature( $time ) ),
-			$this->selected_station['public_key'], build_query( $params )
+			$this->selected_station['public_key'] ?? '', build_query( $params )
 		);
 	}
 
