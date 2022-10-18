@@ -18,12 +18,24 @@ function anvato_shortcode_get_parameters( $attr ) {
 	$analytics = Anvato_Settings()->get_options( Anvato_Settings::ANALYTICS_SETTINGS_KEY );
 	$monetization = Anvato_Settings()->get_options( Anvato_Settings::MONETIZATION_SETTINGS_KEY );
 
+	if ( ! isset( $player['width'] ) || ! isset( $player['width_type'] ) ) {
+		// If either is unset, this can't be a valid value so substitute one.
+		$width = '100%';
+	} else {
+		$width = $player['width'] . $player['width_type'];
+	}
+	if ( ! isset( $player['height'] ) || ! isset( $player['height_type'] ) ) {
+		// If either is unset, this can't be a valid value so substitute one.
+		$height = '100%';
+	} else {
+		$height = $player['height'] . $player['height_type'];
+	}
 	// Set the attributes which the shortcode can override
 	$json = shortcode_atts(
 		array(
 			'mcp' => $mcp['mcp']['id'] ?? '',
-			'width' => $player['width'] . $player['height_type'],
-			'height' => $player['height'] . $player['width_type'],
+			'width' => $width,
+			'height' => $height,
 			'video' => null,
 			'station'=>null,
 			'ext_id' => null,
