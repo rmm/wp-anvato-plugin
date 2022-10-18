@@ -319,10 +319,12 @@ class Anvato_Library {
 
 		$api_method = $this->api_methods[$args['type']];
 
-		foreach ( $this->general_settings['owners'] as $ow_item ) {
-			if ( $args['station'] === $ow_item['id'] ) {
-				$this->selected_station = $ow_item;
-				break;
+		if ( isset( $this->general_settings['owners'] ) ) {
+			foreach ( $this->general_settings['owners'] as $ow_item ) {
+				if ( $args['station'] === $ow_item['id'] ) {
+					$this->selected_station = $ow_item;
+					break;
+				}
 			}
 		}
 
