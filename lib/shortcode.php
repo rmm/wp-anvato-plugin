@@ -146,7 +146,7 @@ function anvato_shortcode_get_parameters( $attr ) {
 	unset($json['station']);
 	
 	//Special consideration for heartbeat analytics
-	$account_obj = json_decode($analytics['heartbeat_account_id']);
+	$account_obj = json_decode($analytics['heartbeat_account_id'] ?? '');
 	if(is_object($account_obj))
 	{
 		$json['plugins']['heartbeat']['account'] = $account_obj;
